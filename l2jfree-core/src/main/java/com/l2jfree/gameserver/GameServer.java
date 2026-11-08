@@ -410,6 +410,7 @@ public final class GameServer extends L2AutoInitialization
 			_log.warn("DynamicExtension could not be loaded and initialized", ex);
 		}
 		AutomatedTvT.getInstance();
+		com.l2paulera.bg.BattlegroundManager.getInstance(); // l2paulera: motor de battlegrounds
 		Util.printSection("Handlers");
 		ItemHandler.getInstance();
 		SkillHandler.getInstance();

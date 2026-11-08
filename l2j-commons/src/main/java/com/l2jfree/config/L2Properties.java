@@ -50,12 +50,12 @@ public final class L2Properties extends Properties
 	
 	public L2Properties(String name) throws IOException
 	{
-		load(new FileInputStream(name));
+		load(name);
 	}
 	
 	public L2Properties(File file) throws IOException
 	{
-		load(new FileInputStream(file));
+		load(file);
 	}
 	
 	public L2Properties(InputStream inStream) throws IOException
@@ -72,12 +72,32 @@ public final class L2Properties extends Properties
 	
 	public void load(String name) throws IOException
 	{
-		load(new FileInputStream(name));
+		load(new File(name));
 	}
 	
 	public void load(File file) throws IOException
 	{
 		load(new FileInputStream(file));
+		loadLocalOverride(file);
+	}
+	
+	/**
+	 * l2paulera: valores da maquina local (senha do banco, endereco do playit.gg etc.) ficam em
+	 * {@code config/local/<mesmo nome>} e sobrescrevem as chaves do arquivo versionado. Essa pasta
+	 * fica fora do git.
+	 */
+	private void loadLocalOverride(File file) throws IOException
+	{
+		final File parent = file.getAbsoluteFile().getParentFile();
+		if (parent == null)
+			return;
+		
+		final File local = new File(new File(parent, "local"), file.getName());
+		if (!local.isFile())
+			return;
+		
+		load(new FileInputStream(local));
+		_log.info("L2Properties: " + file.getName() + " sobrescrito por " + local.getPath());
 	}
 	
 	@Override
