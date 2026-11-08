@@ -26,7 +26,9 @@ import com.l2jfree.gameserver.model.zone.L2Zone;
 import com.l2jfree.gameserver.network.packets.server.NpcHtmlMessage;
 import com.l2paulera.bg.mode.AbstractMode;
 import com.l2paulera.bg.mode.BattlegroundMode;
+import com.l2paulera.bg.mode.CaptureTheFlagMode;
 import com.l2paulera.bg.mode.DeathmatchMode;
+import com.l2paulera.bg.mode.LastManStandingMode;
 import com.l2paulera.bg.mode.TeamVsTeamMode;
 
 /**
@@ -62,6 +64,8 @@ public final class BattlegroundManager
 		BgConfig.load();
 		register(new TeamVsTeamMode());
 		register(new DeathmatchMode());
+		register(new LastManStandingMode());
+		register(new CaptureTheFlagMode());
 		
 		if (BgConfig.ENABLED)
 		{

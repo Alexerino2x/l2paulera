@@ -9,7 +9,7 @@ Motor de eventos no estilo das battlegrounds do WoW. Código em
 | Comando | O que faz |
 |---|---|
 | `.bg` | abre a janela: modos, quantos estão na fila, entrar, rank, seus pontos |
-| `.bg entrar tvt` | entra na fila de um modo (`tvt`, `dm`) |
+| `.bg entrar tvt` | entra na fila de um modo (`tvt`, `dm`, `lms`, `ctf`) |
 | `.bg sair` | sai da fila, ou sai da partida e volta para onde estava |
 | `.bg placar` | placar da partida atual |
 | `.bg rank` / `.bg rank tvt` | top 15 geral ou de um modo |
@@ -36,15 +36,21 @@ que a loja vai gastar; `points_total` nunca diminui e é o que ordena o rank.
 |---|---|---|---|
 | `tvt` | Team vs Team | 2 | 30 abates do time ou fim do tempo |
 | `dm` | Deathmatch | cada um por si | 20 abates ou fim do tempo |
+| `lms` | Last Man Standing | cada um por si, sem renascer | sobra 1 vivo, ou no fim do tempo o vivo com mais abates |
+| `ctf` | Capture the Flag | 2 | 3 capturas ou fim do tempo |
 
-Próximos: Last Man Standing e Capture the Flag.
+No CTF, cada time tem uma bandeira (NPC) na base. Clique na bandeira inimiga para pegá-la (seu
+título vira `*BANDEIRA*`) e clique na sua própria bandeira para pontuar, desde que ela esteja
+na base. Se o portador morrer ou sair, a bandeira volta. Matar o portador vale ponto extra.
 
 ## Criar um modo novo
 
 Implemente `com.l2paulera.bg.mode.BattlegroundMode` (ou estenda `AbstractMode`) e registre em
 `BattlegroundManager` com `register(new MeuModo())`. O motor cuida de fila, instância,
 teleporte, tempo, renascimento, placar, pontos e retorno. O modo só decide como pontua
-(`onKill`, `onTick`), quando acaba (`isFinished`) e quem vence (`getWinners`).
+(`onKill`, `onTick`), quando acaba (`isFinished`) e quem vence (`getWinners`). Ganchos
+opcionais: `onStart` (criar NPCs com `match.spawnNpc`), `onNpcAction` (clique em NPC da
+instância), `onLeave` e `onEnd`. Estado por partida fica em `match.setData/getData`.
 
 ## Banco já existente
 
