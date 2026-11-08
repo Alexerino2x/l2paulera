@@ -17,3 +17,7 @@ logs/
 **/config/local/
 *.local.properties
 .env
+
+# Servidor montado e configuracao da maquina
+/dist/
+/scripts/servidor.env
