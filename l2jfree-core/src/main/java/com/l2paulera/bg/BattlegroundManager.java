@@ -69,6 +69,7 @@ public final class BattlegroundManager
 		
 		if (BgConfig.ENABLED)
 		{
+			BgShop.getInstance().load(BgConfig.SHOP_ITEMS);
 			BattlegroundRestriction.getInstance().activate();
 			_log.info("Battleground: " + _modes.size() + " modos carregados " + _modes.keySet());
 		}
@@ -98,6 +99,7 @@ public final class BattlegroundManager
 	public void reloadConfig()
 	{
 		BgConfig.load();
+		BgShop.getInstance().load(BgConfig.SHOP_ITEMS);
 		for (BattlegroundMode m : _modes.values())
 			if (m instanceof AbstractMode am)
 				am.reload();
@@ -397,7 +399,8 @@ public final class BattlegroundManager
 	// ---- comandos ----------------------------------------------------------------------------
 	
 	/**
-	 * {@code .bg}, {@code .bg entrar tvt}, {@code .bg sair}, {@code .bg rank [modo]}, {@code .bg placar}
+	 * {@code .bg}, {@code .bg entrar tvt}, {@code .bg sair}, {@code .bg rank [modo]}, {@code .bg placar},
+	 * {@code .bg loja}
 	 */
 	public void onCommand(L2Player player, String params)
 	{
@@ -424,6 +427,14 @@ public final class BattlegroundManager
 			case "placar":
 			case "score":
 				showScore(player);
+				break;
+			case "loja":
+			case "shop":
+				BgShop.getInstance().show(player);
+				break;
+			case "comprar":
+				if (arg != null)
+					BgShop.getInstance().buy(player, arg);
 				break;
 			default:
 				showMenu(player);
@@ -457,7 +468,8 @@ public final class BattlegroundManager
 		for (BattlegroundMode m : _modes.values())
 			sb.append(" | <a action=\"bypass -h bg_rank ").append(m.getId()).append("\">").append(m.getId().toUpperCase())
 					.append("</a>");
-		sb.append("<br><br>Seus pontos: ").append(RankService.getInstance().getBalance(player.getObjectId(), RankService.OVERALL));
+		sb.append("<br><br>Seus pontos: ").append(RankService.getInstance().getBalance(player.getObjectId()))
+				.append(" - <a action=\"bypass -h bg_loja\">Loja</a>");
 		sb.append("</center></body></html>");
 		player.sendPacket(new NpcHtmlMessage(0, sb.toString()));
 	}

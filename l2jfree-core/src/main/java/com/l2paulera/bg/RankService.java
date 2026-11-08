@@ -15,8 +15,8 @@ import org.apache.commons.logging.LogFactory;
 import com.l2jfree.L2DatabaseFactory;
 
 /**
- * Pontos de rank por tipo de evento ({@code bg_rank}) e historico de partidas ({@code bg_match}).
- * {@code points} e o saldo que a loja gasta; {@code points_total} nunca diminui e e o que conta no rank.
+ * Pontos de rank por tipo de evento ({@code bg_rank}), carteira da loja ({@code bg_wallet}) e historico de
+ * partidas ({@code bg_match}). Cada ponto ganho entra no rank do modo (nunca diminui) e na carteira (a loja gasta).
  */
 public final class RankService
 {
@@ -57,16 +57,18 @@ public final class RankService
 			winnerIds.add(w.getObjectId());
 		
 		final String sql =
-				"INSERT INTO bg_rank (char_id, mode, points, points_total, matches, wins, losses, kills, deaths) "
-						+ "VALUES (?,?,?,?,1,?,?,?,?) ON DUPLICATE KEY UPDATE points=points+VALUES(points), "
-						+ "points_total=points_total+VALUES(points_total), matches=matches+1, wins=wins+VALUES(wins), "
+				"INSERT INTO bg_rank (char_id, mode, points, matches, wins, losses, kills, deaths) "
+						+ "VALUES (?,?,?,1,?,?,?,?) ON DUPLICATE KEY UPDATE points=points+VALUES(points), "
+						+ "matches=matches+1, wins=wins+VALUES(wins), "
 						+ "losses=losses+VALUES(losses), kills=kills+VALUES(kills), deaths=deaths+VALUES(deaths)";
+		final String walletSql =
+				"INSERT INTO bg_wallet (char_id, balance) VALUES (?,?) ON DUPLICATE KEY UPDATE balance=balance+VALUES(balance)";
 		
 		Connection con = null;
 		try
 		{
 			con = L2DatabaseFactory.getInstance().getConnection();
-			try (PreparedStatement ps = con.prepareStatement(sql))
+			try (PreparedStatement ps = con.prepareStatement(sql); PreparedStatement wallet = con.prepareStatement(walletSql))
 			{
 				for (Participant p : match.getParticipants())
 				{
@@ -77,17 +79,24 @@ public final class RankService
 					ps.setInt(1, p.getObjectId());
 					ps.setString(2, mode);
 					ps.setInt(3, pts);
-					ps.setInt(4, pts);
-					ps.setInt(5, won ? 1 : 0);
-					ps.setInt(6, !won && !draw ? 1 : 0);
-					ps.setInt(7, p.getKills());
-					ps.setInt(8, p.getDeaths());
+					ps.setInt(4, won ? 1 : 0);
+					ps.setInt(5, !won && !draw ? 1 : 0);
+					ps.setInt(6, p.getKills());
+					ps.setInt(7, p.getDeaths());
 					ps.addBatch();
+					
+					if (pts > 0)
+					{
+						wallet.setInt(1, p.getObjectId());
+						wallet.setInt(2, pts);
+						wallet.addBatch();
+					}
 					
 					if (pts > 0 && p.getPlayer() != null)
 						p.getPlayer().sendMessage("Battleground: +" + pts + " pontos de rank em " + match.getMode().getDisplayName() + ".");
 				}
 				ps.executeBatch();
+				wallet.executeBatch();
 			}
 			try (PreparedStatement ps =
 					con.prepareStatement("INSERT INTO bg_match (mode, ended_at, players, result) VALUES (?, NOW(), ?, ?)"))
@@ -113,7 +122,7 @@ public final class RankService
 	{
 		final boolean overall = OVERALL.equals(mode);
 		final String sql =
-				"SELECT c.char_name, SUM(r.points_total) pts, SUM(r.wins) w, SUM(r.matches) m, SUM(r.kills) k, SUM(r.deaths) d "
+				"SELECT c.char_name, SUM(r.points) pts, SUM(r.wins) w, SUM(r.matches) m, SUM(r.kills) k, SUM(r.deaths) d "
 						+ "FROM bg_rank r JOIN characters c ON c.charId = r.char_id "
 						+ (overall ? "" : "WHERE r.mode = ? ")
 						+ "GROUP BY r.char_id, c.char_name ORDER BY pts DESC, w DESC LIMIT ?";
@@ -146,20 +155,16 @@ public final class RankService
 		return list;
 	}
 	
-	/** saldo de pontos (para a loja) de um personagem em um modo, ou somado se {@link #OVERALL} */
-	public int getBalance(int charId, String mode)
+	/** saldo da carteira (pontos para a loja) */
+	public int getBalance(int charId)
 	{
-		final boolean overall = OVERALL.equals(mode);
 		Connection con = null;
 		try
 		{
 			con = L2DatabaseFactory.getInstance().getConnection();
-			try (PreparedStatement ps = con.prepareStatement("SELECT COALESCE(SUM(points),0) FROM bg_rank WHERE char_id=?"
-					+ (overall ? "" : " AND mode=?")))
+			try (PreparedStatement ps = con.prepareStatement("SELECT balance FROM bg_wallet WHERE char_id=?"))
 			{
 				ps.setInt(1, charId);
-				if (!overall)
-					ps.setString(2, mode);
 				try (ResultSet rs = ps.executeQuery())
 				{
 					return rs.next() ? rs.getInt(1) : 0;
@@ -170,6 +175,74 @@ public final class RankService
 		{
 			_log.error("Battleground: erro ao ler saldo", e);
 			return 0;
+		}
+		finally
+		{
+			L2DatabaseFactory.close(con);
+		}
+	}
+	
+	/**
+	 * Debita a carteira de forma atomica.
+	 * 
+	 * @return true se havia saldo e o valor foi debitado
+	 */
+	public boolean spend(int charId, int amount)
+	{
+		return changeBalance(charId, -amount);
+	}
+	
+	/** devolve pontos (ex.: compra que falhou) */
+	public void refund(int charId, int amount)
+	{
+		changeBalance(charId, amount);
+	}
+	
+	private boolean changeBalance(int charId, int delta)
+	{
+		Connection con = null;
+		try
+		{
+			con = L2DatabaseFactory.getInstance().getConnection();
+			try (PreparedStatement ps =
+					con.prepareStatement("UPDATE bg_wallet SET balance=balance+? WHERE char_id=? AND balance+? >= 0"))
+			{
+				ps.setInt(1, delta);
+				ps.setInt(2, charId);
+				ps.setInt(3, delta);
+				return ps.executeUpdate() == 1;
+			}
+		}
+		catch (SQLException e)
+		{
+			_log.error("Battleground: erro ao alterar saldo de " + charId, e);
+			return false;
+		}
+		finally
+		{
+			L2DatabaseFactory.close(con);
+		}
+	}
+	
+	void logPurchase(int charId, int itemId, long count, int price)
+	{
+		Connection con = null;
+		try
+		{
+			con = L2DatabaseFactory.getInstance().getConnection();
+			try (PreparedStatement ps = con.prepareStatement(
+					"INSERT INTO bg_shop_log (char_id, item_id, count, price, bought_at) VALUES (?,?,?,?,NOW())"))
+			{
+				ps.setInt(1, charId);
+				ps.setInt(2, itemId);
+				ps.setLong(3, count);
+				ps.setInt(4, price);
+				ps.executeUpdate();
+			}
+		}
+		catch (SQLException e)
+		{
+			_log.error("Battleground: erro ao registrar compra", e);
 		}
 		finally
 		{

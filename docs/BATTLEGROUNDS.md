@@ -13,6 +13,7 @@ Motor de eventos no estilo das battlegrounds do WoW. Código em
 | `.bg sair` | sai da fila, ou sai da partida e volta para onde estava |
 | `.bg placar` | placar da partida atual |
 | `.bg rank` / `.bg rank tvt` | top 15 geral ou de um modo |
+| `.bg loja` | loja paga com pontos (só na cidade, fora de partida) |
 
 Fluxo: entra na fila de dentro da cidade → quando a fila atinge o mínimo, contagem de 30s →
 todos vão para uma instância própria (várias partidas podem rodar ao mesmo tempo na mesma
@@ -27,8 +28,17 @@ com renascimento), nome colorido pelo time, party só com o próprio time.
 Por partida: vitória 30, derrota 10, empate 15, mais 2 por abate (no máximo 20). Quem sai no
 meio não ganha pontos e a partida conta como derrota.
 
-Cada modo tem seu rank (`bg_rank.mode`). O rank geral é a soma dos modos. `points` é o saldo
-que a loja vai gastar; `points_total` nunca diminui e é o que ordena o rank.
+Cada ponto ganho vai para dois lugares:
+
+- **Rank** (`bg_rank`, por modo): nunca diminui. O rank geral é a soma dos modos.
+- **Carteira** (`bg_wallet`): é o que a loja gasta.
+
+## Loja
+
+Itens em `Shop.Items` no `battleground.properties`, no formato `itemId:quantidade:preço;...`.
+Padrão: Blessed SoE, adena, scrolls de enchant S (normais e abençoados), life stones top 76/80 e
+Giant's Codex. A compra debita a carteira de forma atômica antes de entregar o item; se a entrega
+falhar, os pontos voltam. Cada compra fica registrada em `bg_shop_log`.
 
 ## Modos
 
