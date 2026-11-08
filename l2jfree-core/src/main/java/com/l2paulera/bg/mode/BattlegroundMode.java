@@ -2,6 +2,7 @@ package com.l2paulera.bg.mode;
 
 import java.util.List;
 
+import com.l2jfree.gameserver.gameobjects.L2Npc;
 import com.l2jfree.gameserver.model.Location;
 import com.l2paulera.bg.Match;
 import com.l2paulera.bg.Participant;
@@ -37,6 +38,26 @@ public interface BattlegroundMode
 	
 	/** chamado a cada tick do motor durante o combate */
 	default void onTick(Match match)
+	{
+	}
+	
+	/** o participante saiu ou desconectou (ex.: soltar a bandeira) */
+	default void onLeave(Match match, Participant participant)
+	{
+	}
+	
+	/**
+	 * o participante clicou num NPC da propria instancia (ex.: bandeira)
+	 * 
+	 * @return true se o modo tratou o clique
+	 */
+	default boolean onNpcAction(Match match, Participant participant, L2Npc npc)
+	{
+		return false;
+	}
+	
+	/** a partida acabou; limpar estado do modo */
+	default void onEnd(Match match)
 	{
 	}
 	

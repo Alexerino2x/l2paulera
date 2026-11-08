@@ -1,6 +1,7 @@
 package com.l2paulera.bg;
 
 import com.l2jfree.gameserver.gameobjects.L2Creature;
+import com.l2jfree.gameserver.gameobjects.L2Npc;
 import com.l2jfree.gameserver.gameobjects.L2Playable;
 import com.l2jfree.gameserver.gameobjects.L2Player;
 import com.l2jfree.gameserver.model.restriction.global.AbstractRestriction;
@@ -135,6 +136,13 @@ public final class BattlegroundRestriction extends AbstractRestriction
 		// so conta como abate se o assassino estiver na mesma partida
 		m.onKill(killer != null && mgr().getMatch(killer) == m ? killer : null, target);
 		return true; // sem karma, sem pvp count, sem perda de exp pela regra normal
+	}
+	
+	@Override
+	public boolean onAction(L2Npc npc, L2Player activeChar)
+	{
+		final Match m = mgr().getMatch(activeChar);
+		return m != null && m.onNpcAction(activeChar, npc);
 	}
 	
 	@Override

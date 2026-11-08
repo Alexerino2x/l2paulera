@@ -13,10 +13,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.l2jfree.gameserver.ThreadPoolManager;
+import com.l2jfree.gameserver.datatables.NpcTable;
+import com.l2jfree.gameserver.gameobjects.L2Npc;
 import com.l2jfree.gameserver.gameobjects.L2Player;
 import com.l2jfree.gameserver.instancemanager.InstanceManager;
 import com.l2jfree.gameserver.model.Location;
 import com.l2jfree.gameserver.model.entity.Instance;
+import com.l2jfree.gameserver.model.world.spawn.L2Spawn;
 import com.l2jfree.gameserver.network.SystemChatChannelId;
 import com.l2jfree.gameserver.network.packets.server.CreatureSay;
 import com.l2jfree.gameserver.network.packets.server.ExShowScreenMessage;
@@ -52,6 +55,8 @@ public final class Match
 	private volatile State _state = State.PREPARING;
 	private volatile long _combatStart;
 	private ScheduledFuture<?> _tickTask;
+	/** estado livre para os modos (ex.: bandeiras do CTF) */
+	private final Map<String, Object> _data = new ConcurrentHashMap<>();
 	
 	Match(BattlegroundMode mode, List<L2Player> players)
 	{
@@ -142,6 +147,47 @@ public final class Match
 	public synchronized void addTeamScore(int team, int value)
 	{
 		_teamScores[team] += value;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T getData(String key)
+	{
+		return (T)_data.get(key);
+	}
+	
+	public void setData(String key, Object value)
+	{
+		_data.put(key, value);
+	}
+	
+	/** cria um NPC dentro da instancia da partida (some junto com ela) */
+	public L2Npc spawnNpc(int npcId, Location loc, String title)
+	{
+		try
+		{
+			final L2Spawn spawn = new L2Spawn(NpcTable.getInstance().getTemplate(npcId));
+			spawn.setLocx(loc.getX());
+			spawn.setLocy(loc.getY());
+			spawn.setLocz(loc.getZ());
+			spawn.setHeading(0);
+			spawn.setAmount(1);
+			spawn.setRespawnDelay(60);
+			spawn.setInstanceId(_instanceId);
+			final L2Npc npc = spawn.doSpawn();
+			spawn.stopRespawn();
+			if (title != null)
+			{
+				npc.setTitle(title);
+				npc.broadcastFullInfo();
+			}
+			InstanceManager.getInstance().getInstance(_instanceId).addNpc(npc);
+			return npc;
+		}
+		catch (Exception e)
+		{
+			_log.error("Battleground #" + _id + ": nao consegui criar o NPC " + npcId, e);
+			return null;
+		}
 	}
 	
 	public static String getTeamName(int team)
@@ -287,6 +333,14 @@ public final class Match
 	
 	private void cleanup()
 	{
+		try
+		{
+			_mode.onEnd(this);
+		}
+		catch (Exception e)
+		{
+			_log.error("Battleground #" + _id + ": erro no fim do modo", e);
+		}
 		for (Participant p : _participants.values())
 		{
 			if (p.hasLeft())
@@ -339,6 +393,19 @@ public final class Match
 		heal(player);
 	}
 	
+	boolean onNpcAction(L2Player player, L2Npc npc)
+	{
+		final Participant p = _participants.get(player.getObjectId());
+		if (p == null || p.hasLeft() || npc.getInstanceId() != _instanceId)
+			return false;
+		if (_state != State.RUNNING)
+			return true;
+		synchronized (this)
+		{
+			return _mode.onNpcAction(this, p, npc);
+		}
+	}
+	
 	/** o jogador saiu por comando; volta para onde estava */
 	void leave(L2Player player)
 	{
@@ -346,6 +413,7 @@ public final class Match
 		if (p == null || p.hasLeft())
 			return;
 		p.setLeft();
+		_mode.onLeave(this, p);
 		returnPlayer(player, p);
 		broadcastMessage(player.getName() + " saiu da partida.");
 	}
@@ -357,6 +425,7 @@ public final class Match
 		if (p == null || p.hasLeft())
 			return null;
 		p.setLeft();
+		_mode.onLeave(this, p);
 		broadcastMessage(player.getName() + " desconectou.");
 		return p;
 	}
@@ -389,6 +458,7 @@ public final class Match
 		if (player.isDead())
 			player.doRevive();
 		heal(player);
+		player.getAppearance().setVisibleTitle(null);
 		player.setInstanceId(0);
 		final Location loc = p.getReturnLoc() != null ? p.getReturnLoc() : BgConfig.DEFAULT_RETURN;
 		player.teleToLocation(loc, true);
