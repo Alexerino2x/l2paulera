@@ -1,0 +1,1 @@
+ALTER TABLE `custom_armor` ADD `enchant4_skill` VARCHAR(8) NOT NULL DEFAULT '' AFTER `tradeable`;
