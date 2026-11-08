@@ -34,6 +34,9 @@ public final class BgConfig
 	public static int POINTS_PER_KILL;
 	public static int POINTS_KILL_CAP;
 	
+	/** itemId:quantidade:preco;... */
+	public static String SHOP_ITEMS;
+	
 	private static L2Properties _props = new L2Properties();
 	
 	private BgConfig()
@@ -67,6 +70,8 @@ public final class BgConfig
 		POINTS_DRAW = _props.getInteger("Points.Draw", 15);
 		POINTS_PER_KILL = _props.getInteger("Points.PerKill", 2);
 		POINTS_KILL_CAP = _props.getInteger("Points.KillCap", 20);
+		
+		SHOP_ITEMS = _props.getString("Shop.Items", "");
 	}
 	
 	// ---- por modo: <Id>.<Chave> ----------------------------------------------------------
