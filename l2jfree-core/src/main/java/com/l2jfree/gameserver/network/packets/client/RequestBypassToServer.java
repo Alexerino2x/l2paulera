@@ -176,6 +176,8 @@ public class RequestBypassToServer extends L2ClientPacket
 		}
 		else if (_command.startsWith("OlympiadArenaChange"))
 			Olympiad.bypassChangeArena(_command, activeChar);
+		else if (_command.startsWith("bg_")) // l2paulera: janelas do motor de battlegrounds
+			com.l2paulera.bg.BattlegroundManager.getInstance().onBypass(activeChar, _command.substring(3));
 		else if (_command.startsWith("_herolist"))
 		{
 			activeChar.sendPacket(new ExHeroList());
