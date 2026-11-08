@@ -1,0 +1,2 @@
+ALTER TABLE `posts` ADD `post_forum_id` INT(8) NOT NULL DEFAULT '0' AFTER `post_topic_id`;
+UPDATE `posts` SET `post_forum_id` = (SELECT topic_forum_id FROM topic WHERE topic_id = posts.`post_topic_id`);

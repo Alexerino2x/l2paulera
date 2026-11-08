@@ -1,0 +1,1 @@
+ALTER TABLE `items` ADD `time` INT(4) NOT NULL DEFAULT 0;

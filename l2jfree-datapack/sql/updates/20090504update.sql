@@ -1,0 +1,1 @@
+ALTER TABLE `fort` ADD `blood` INT(3) NOT NULL DEFAULT 0 AFTER `castleId`;

@@ -1,0 +1,1 @@
+ALTER TABLE `accounts` ADD `lastServerId` INT NOT NULL DEFAULT '0' AFTER `accessLevel` ;

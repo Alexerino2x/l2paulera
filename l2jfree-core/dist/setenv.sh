@@ -1,0 +1,8 @@
+CLASSPATH=${CLASSPATH}:./libs/*
+
+# for configuration
+CLASSPATH=${CLASSPATH}:./config/
+CLASSPATH=${CLASSPATH}:./*
+CLASSPATH=${CLASSPATH}:.
+
+export CLASSPATH

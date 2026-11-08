@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                      http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+		<groupId>com.l2jfree</groupId>
+		<artifactId>l2jfree-module</artifactId>
+		<version>1.3.0</version>
+		<relativePath>../l2jfree-module</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>l2jfree-core</artifactId>
+	<name>${project.artifactId}-${project.version}</name>
+	<packaging>jar</packaging>
+	<dependencies>
+		<dependency>
+			<groupId>com.l2jfree</groupId>
+			<artifactId>l2j-commons</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.l2jfree</groupId>
+			<artifactId>l2j-mmocore</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.l2jfree</groupId>
+			<artifactId>l2jfree-scripting-engines</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<!-- Updating dependencies below is not necessary. -->
+		<dependency>
+			<groupId>org.schwering</groupId>
+			<artifactId>irclib</artifactId>
+			<version>1.10</version>
+		</dependency>
+		<dependency>
+			<!-- We should either upgrade/reorganize tests (for JUnit 4) or just remove 
+				them since anyway they are skipped by default -->
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.13.2</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<build>
+		<defaultGoal>install</defaultGoal>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>
+	

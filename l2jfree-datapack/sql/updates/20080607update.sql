@@ -1,0 +1,1 @@
+ALTER TABLE `characters` ADD `trust_level` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `death_penalty_level`;
