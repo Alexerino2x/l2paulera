@@ -2603,6 +2603,7 @@ public final class Config
 	
 	//  *******************************************************************************************
 	public static final String SUBNETS_FILE = "./config/subnets.properties";
+	public static final String SUBNETS_LOCAL_FILE = "./config/local/subnets.properties";
 	//  *******************************************************************************************
 	public static String SUBNETWORKS;
 	
@@ -2618,7 +2619,14 @@ public final class Config
 			String line = null;
 			SUBNETWORKS = "";
 			
-			lnr = new LineNumberReader(new InputStreamReader(new FileInputStream(new File(SUBNETS_FILE))));
+			// l2paulera: config/local/subnets.properties (fora do git) tem prioridade sobre o padrao
+			File subnetsFile = new File(SUBNETS_LOCAL_FILE);
+			if (!subnetsFile.isFile())
+				subnetsFile = new File(SUBNETS_FILE);
+			else
+				_log.info("using " + SUBNETS_LOCAL_FILE);
+			
+			lnr = new LineNumberReader(new InputStreamReader(new FileInputStream(subnetsFile)));
 			
 			while ((line = lnr.readLine()) != null)
 			{
