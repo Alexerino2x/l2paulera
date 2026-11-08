@@ -1,0 +1,19 @@
+# Build
+target/
+*.class
+
+# Logs
+log/
+logs/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Segredos e configuração local (NUNCA versionar)
+**/config/hexid.txt
+**/config/local/
+*.local.properties
+.env
